@@ -1,0 +1,12 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL:-http://localhost:3001}
+    container_name: incident-frontend-nginx
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"

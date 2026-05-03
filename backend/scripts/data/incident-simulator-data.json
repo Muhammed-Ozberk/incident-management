@@ -1,0 +1,209 @@
+{
+  "services": [
+    "Payment API",
+    "Auth Service",
+    "Notification Worker",
+    "Billing Scheduler",
+    "Fraud Detection",
+    "User Profile API",
+    "Search Indexer",
+    "Webhook Dispatcher",
+    "Reporting Service",
+    "File Processing Worker",
+    "Order Management API",
+    "Inventory Service",
+    "Customer Support API",
+    "Email Gateway",
+    "SMS Gateway",
+    "Audit Log Worker",
+    "Analytics Pipeline",
+    "Feature Flag Service",
+    "Session Store",
+    "Gateway Proxy"
+  ],
+  "templates": [
+    {
+      "title": "Checkout latency spike",
+      "description": "Checkout requests are taking longer than the expected response threshold."
+    },
+    {
+      "title": "Authentication failures increased",
+      "description": "A higher than usual number of authentication attempts are failing."
+    },
+    {
+      "title": "Notification queue delay",
+      "description": "Background notification jobs are waiting in the queue for longer than expected."
+    },
+    {
+      "title": "External provider timeout",
+      "description": "A downstream provider is timing out and retry volume is increasing."
+    },
+    {
+      "title": "Database connection pool saturation",
+      "description": "Connection pool usage is above the safe threshold and requests are waiting for available connections."
+    },
+    {
+      "title": "Unexpected error rate increase",
+      "description": "The service is returning more 5xx responses than the normal operating baseline."
+    },
+    {
+      "title": "Background job retry storm",
+      "description": "A batch of failed jobs is retrying aggressively and increasing queue pressure."
+    },
+    {
+      "title": "Webhook delivery failures",
+      "description": "Customer webhook deliveries are failing intermittently and retry attempts are accumulating."
+    },
+    {
+      "title": "Fraud scoring provider degraded",
+      "description": "Risk checks are slower than expected because the external scoring provider is degraded."
+    },
+    {
+      "title": "Invoice generation delayed",
+      "description": "Scheduled invoice generation is running behind and some invoices are waiting in the processing queue."
+    },
+    {
+      "title": "Search index lag detected",
+      "description": "Recently updated records are not appearing in search results within the expected freshness window."
+    },
+    {
+      "title": "User profile write failures",
+      "description": "Profile update requests are failing for a subset of users after validation succeeds."
+    },
+    {
+      "title": "File processing throughput drop",
+      "description": "File processing workers are completing fewer jobs per minute than expected."
+    },
+    {
+      "title": "Notification provider throttling",
+      "description": "The email provider is throttling requests, causing delayed customer notifications."
+    },
+    {
+      "title": "Token refresh failures",
+      "description": "Refresh token requests are failing and users may need to sign in again."
+    },
+    {
+      "title": "Payment reconciliation mismatch",
+      "description": "Reconciliation detected mismatched payment states between internal records and the provider."
+    },
+    {
+      "title": "Report export timeout",
+      "description": "Large report exports are timing out before files are generated for download."
+    },
+    {
+      "title": "Cache hit ratio drop",
+      "description": "Cache hit ratio dropped sharply and database read load is increasing."
+    },
+    {
+      "title": "Message broker consumer lag",
+      "description": "Consumers are falling behind and event processing latency is increasing."
+    },
+    {
+      "title": "Inventory reservation conflicts",
+      "description": "Multiple order flows are attempting to reserve the same inventory and conflict retries are increasing."
+    },
+    {
+      "title": "Order state transition failures",
+      "description": "Orders are failing to move from pending to confirmed after payment capture succeeds."
+    },
+    {
+      "title": "Audit log persistence delay",
+      "description": "Audit events are being accepted but persistence latency is above the expected threshold."
+    },
+    {
+      "title": "Analytics pipeline ingestion lag",
+      "description": "Event ingestion is behind schedule and dashboards may show delayed metrics."
+    },
+    {
+      "title": "Feature flag evaluation errors",
+      "description": "Feature flag lookups are intermittently failing and fallback behavior is being used."
+    },
+    {
+      "title": "Gateway proxy upstream reset",
+      "description": "The API gateway is seeing upstream connection resets for selected service routes."
+    },
+    {
+      "title": "Session store memory pressure",
+      "description": "Session storage nodes are approaching memory limits and eviction rate is increasing."
+    },
+    {
+      "title": "Customer support case sync delay",
+      "description": "Support cases are not syncing to the internal CRM within the expected time window."
+    },
+    {
+      "title": "SMS delivery callback failures",
+      "description": "Delivery callbacks from the SMS provider are failing signature validation."
+    },
+    {
+      "title": "Email bounce processing backlog",
+      "description": "Bounce events are accumulating and suppression lists may be delayed."
+    },
+    {
+      "title": "Read replica replication lag",
+      "description": "Read replicas are lagging behind the primary database and stale reads may occur."
+    },
+    {
+      "title": "Rate limit configuration drift",
+      "description": "Runtime rate limit values differ from the expected configuration for some routes."
+    },
+    {
+      "title": "Object storage upload failures",
+      "description": "File uploads are intermittently failing during multipart upload completion."
+    },
+    {
+      "title": "Scheduled task missed execution",
+      "description": "A scheduled background task missed its expected execution window."
+    },
+    {
+      "title": "High CPU on worker pool",
+      "description": "Worker pool CPU utilization is sustained above the expected operating range."
+    },
+    {
+      "title": "TLS certificate expiry warning",
+      "description": "A dependent endpoint certificate is approaching expiry and should be rotated."
+    },
+    {
+      "title": "API gateway 429 surge",
+      "description": "The gateway is returning an elevated number of rate limit responses."
+    },
+    {
+      "title": "Dead letter queue growth",
+      "description": "Messages are accumulating in the dead letter queue and require inspection."
+    },
+    {
+      "title": "Payment provider partial outage",
+      "description": "A subset of payment provider operations are degraded and fallback routing may be needed."
+    },
+    {
+      "title": "Login session invalidation spike",
+      "description": "More active sessions than expected are being invalidated within a short time window."
+    },
+    {
+      "title": "Configuration reload failure",
+      "description": "Service instances failed to reload new configuration and continue using stale values."
+    }
+  ],
+  "impactStatements": [
+    "Impact is limited to a small percentage of traffic.",
+    "Customer-facing latency may be noticeable.",
+    "Operators should monitor the related dashboards closely.",
+    "The issue may affect retries and downstream processing.",
+    "No data loss has been observed at this time.",
+    "Escalation may be required if the trend continues.",
+    "A rollback candidate should be prepared if symptoms increase.",
+    "The system is still serving most requests successfully.",
+    "The latest deployment should be reviewed for related changes.",
+    "Affected traffic may recover automatically after retries.",
+    "On-call ownership has not been assigned yet.",
+    "The incident should be correlated with provider status pages.",
+    "Customer support may receive duplicate reports.",
+    "Internal dashboards may temporarily show inconsistent numbers.",
+    "Manual intervention may be needed if backlog continues growing.",
+    "The issue appears intermittent and requires trend monitoring.",
+    "The primary mitigation is to reduce load on the affected component.",
+    "The team should verify whether recent config changes are related.",
+    "Additional logs should be sampled before closing the incident.",
+    "The incident may affect downstream SLAs if it persists."
+  ]
+}
+

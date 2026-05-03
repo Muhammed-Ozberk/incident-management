@@ -1,0 +1,609 @@
+{
+  "info": {
+    "_postman_id": "1b4330f2-3f8f-45de-9f62-80a7f5a7b78c",
+    "name": "Incident Management API",
+    "description": "REST API collection for the real-time incident management case study. Run Services / List Services first to populate serviceId. Realtime Socket.IO events emitted by the backend: incident.created, incident.updated, incident.deleted.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "incidentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "serviceId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Services",
+      "item": [
+        {
+          "name": "List Services",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "services"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Services listed', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.status).to.eql(true);",
+                  "  pm.expect(json).to.have.property('data');",
+                  "  pm.expect(json.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.length > 0) {",
+                  "  pm.collectionVariables.set('serviceId', json.data[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Reporting Service\",\n  \"description\": \"Generates customer-facing operational reports.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "services"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Service created or conflict returned', function () {",
+                  "  pm.expect([201, 409]).to.include(pm.response.code);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.status).to.be.a('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Incidents",
+      "item": [
+        {
+          "name": "Get Incident Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents",
+                "stats"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Stats returned', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.status).to.eql(true);",
+                  "  pm.expect(json).to.have.property('data');",
+                  "  pm.expect(json.data).to.have.property('total');",
+                  "  pm.expect(json.data).to.have.property('open');",
+                  "  pm.expect(json.data).to.have.property('critical');",
+                  "  pm.expect(json.data).to.have.property('investigating');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Incidents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Listed', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.status).to.eql(true);",
+                  "  pm.expect(json).to.have.property('data');",
+                  "  pm.expect(json.data).to.have.property('items');",
+                  "  pm.expect(json.data).to.have.property('meta');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Incidents With Filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents?page=1&limit=10&status=open&severity=high&serviceId={{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "open"
+                },
+                {
+                  "key": "severity",
+                  "value": "high"
+                },
+                {
+                  "key": "serviceId",
+                  "value": "{{serviceId}}"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Filtered list returned', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.status).to.eql(true);",
+                  "  pm.expect(json).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Incident",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.status).to.eql(true);",
+                  "  pm.expect(json).to.have.property('data');",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) {",
+                  "  pm.collectionVariables.set('incidentId', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Database timeout on payment service\",\n  \"description\": \"Users are receiving timeout errors during checkout.\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"severity\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "AI Suggest Incident Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Search index freshness delay\",\n  \"description\": \"Recently updated records are not appearing in search results within the expected freshness window for multiple customers.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/incidents/ai-suggest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents",
+                "ai-suggest"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('AI suggestion returned', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.status).to.eql(true);",
+                  "  pm.expect(json).to.have.property('data');",
+                  "  pm.expect(json.data).to.have.property('severity');",
+                  "  pm.expect(json.data).to.have.property('serviceId');",
+                  "  pm.expect(json.data).to.have.property('serviceName');",
+                  "  pm.expect(json.data).to.have.property('reasoning');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generate Incident AI Summary",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"regenerate\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/incidents/{{incidentId}}/ai-summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents",
+                "{{incidentId}}",
+                "ai-summary"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('AI summary returned', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.status).to.eql(true);",
+                  "  pm.expect(json).to.have.property('data');",
+                  "  pm.expect(json.data).to.have.property('summary');",
+                  "  pm.expect(json.data).to.have.property('generated');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Incident Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents/{{incidentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents",
+                "{{incidentId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Retrieved', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.status).to.eql(true);",
+                  "  pm.expect(json.data.id).to.eql(pm.collectionVariables.get('incidentId'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Incident",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Updated', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.status).to.eql(true);",
+                  "  pm.expect(json.data.status).to.eql('resolved');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"resolved\",\n  \"severity\": \"medium\",\n  \"description\": \"Checkout errors have stopped after database pool tuning. Monitoring continues.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/incidents/{{incidentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents",
+                "{{incidentId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Incident",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Deleted', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.status).to.eql(true);",
+                  "  pm.expect(json.data.id).to.eql(pm.collectionVariables.get('incidentId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/incidents/{{incidentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents",
+                "{{incidentId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Validation Examples",
+      "item": [
+        {
+          "name": "Create Incident - Invalid Severity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Invalid severity example\",\n  \"description\": \"This request should return a validation error.\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"severity\": \"urgent\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/incidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Validation failed', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.status).to.eql(false);",
+                  "  pm.expect(json).to.not.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Incident - Empty Body",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/incidents/{{incidentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidents",
+                "{{incidentId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Empty update failed', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.message).to.be.a('string');",
+                  "  pm.expect(json.status).to.eql(false);",
+                  "  pm.expect(json).to.not.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
