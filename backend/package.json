@@ -15,6 +15,7 @@
     "simulate": "ts-node scripts/incident-simulator.ts",
     "test": "jest",
     "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:integration": "jest --config ./test/jest-testcontainers.json --runInBand",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage"
   },
@@ -42,6 +43,7 @@
     "@nestjs/cli": "^10.4.8",
     "@nestjs/schematics": "^10.2.3",
     "@nestjs/testing": "^10.4.15",
+    "@testcontainers/postgresql": "^10.28.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.2",
     "@types/supertest": "^7.2.0",

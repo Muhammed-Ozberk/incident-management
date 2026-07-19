@@ -1,95 +1,93 @@
-# Incident Management Dashboard
+# Incident Management
 
-Gerçek zamanlı incident yönetim paneli case çalışması. Proje, farklı backend servislerinden gelen incident kayıtlarını merkezi olarak oluşturmak, listelemek, güncellemek, silmek ve arayüzde anlık takip etmek için hazırlanmıştır.
+Real-time incident management dashboard with NestJS, PostgreSQL, Socket.IO and AI-assisted triage.
 
-## Proje Yapısı
+![Incident Management dashboard](docs/images/dashboard.png)
+
+## Demo
+
+The demo follows an incident from intake through AI-assisted prioritization and a real-time status update.
+
+![Incident creation and triage demo](docs/images/demo.gif)
+
+The saved AI summary is available directly from each incident record:
+
+![AI-generated incident summary](docs/images/ai-summary.png)
+
+## Incident lifecycle
+
+1. **Create** — Operators submit a title, description, affected service, and initial severity from the dashboard or REST API. Every incident starts in the `open` state and its creation is recorded in the audit log.
+2. **Prioritize** — Severity (`low`, `medium`, `high`, or `critical`) expresses urgency. AI-assisted triage can recommend both severity and the affected service from the incident context, while operators retain final control.
+3. **Assign** — Selecting the affected registered service assigns the incident to that service as the current ownership boundary. The data model does not yet include individual on-call assignment, so the documentation does not imply that it does.
+4. **Update in real time** — Status changes move an incident through `open`, `investigating`, and `resolved`. After PostgreSQL commits the change, Socket.IO broadcasts `incident.created`, `incident.updated`, or `incident.deleted`; connected dashboards refresh their list, metrics, and notifications immediately.
+5. **Summarize with AI** — Operators can generate a concise incident summary. The summary is persisted in PostgreSQL, reused on later views, and can be regenerated. Without a Gemini API key, a deterministic fallback keeps the flow usable.
+
+## Features
+
+- Centralized incident intake, filtering, pagination, and metrics
+- Registered service catalog and service-based ownership
+- Severity and status workflows with audit history
+- Real-time dashboard synchronization and connection status
+- AI-assisted severity/service suggestions and persisted summaries
+- Soft deletion for incidents and deactivation for services
+- Swagger/OpenAPI documentation and a Postman collection
+- Unit, UI, end-to-end, and containerized PostgreSQL integration tests
+
+## Technology
+
+| Area | Stack |
+| --- | --- |
+| Backend | NestJS, TypeScript, Prisma ORM, PostgreSQL |
+| Real time | Socket.IO, Socket.IO Client |
+| AI | Google Gemini SDK with deterministic fallback |
+| Frontend | React, Vite, TypeScript, Tailwind CSS, Lucide |
+| Testing | Jest, Vitest, Supertest, Testcontainers |
+| Tooling | Docker Compose, Swagger/OpenAPI, Postman |
+
+## Repository structure
 
 ```text
 backend/
-  prisma/
-    migrations/
-    seed.ts
-  scripts/
-    incident-simulator.ts
-    data/
+  prisma/                 # Schema, migrations, and seed data
+  scripts/                # Incident simulator
   src/
-    common/
-    config/
-    database/
-    modules/
-      ai/
-      incidents/
-      realtime/
-      services/
-
+    common/               # Filters and interceptors
+    database/             # Prisma integration
+    modules/               # AI, incidents, realtime, and services
+  test/                   # E2E and Testcontainers integration tests
 frontend/
   src/
     components/
-    features/
-      incidents/
-      services/
+    features/             # Incident and service UI modules
     pages/
-
-postman/
-  incident-management.postman_collection.json
+docs/images/              # README screenshots and demo GIF
+postman/                  # API collection
 ```
 
-## Kullanılan Teknolojiler
+## Getting started locally
 
-Backend:
-- NestJS
-- PostgreSQL
-- Prisma ORM
-- Socket.IO
-- Swagger / OpenAPI
-- @nestjs/config
-- class-validator / class-transformer
-- Jest
-- Google Gemini AI SDK
+### Prerequisites
 
-Frontend:
-- React
-- Vite
-- TypeScript
-- TailwindCSS
-- Socket.IO Client
-- Vitest
-- lucide-react
+- Node.js 20 or later
+- npm
+- PostgreSQL 16, or Docker for the included database
 
-DevOps / Yardımcı Araçlar:
-- Docker Compose
-- Postman collection
-- Seed script
-- Incident simulator script
-
-## Kurulum Seçenekleri
-
-Projeyi iki ana şekilde çalıştırabilirsiniz:
-- Lokal kurulum: Backend ve frontend lokal Node.js ile çalışır. PostgreSQL isterseniz Docker ile, isterseniz bilgisayarınızdaki lokal PostgreSQL ile çalıştırılabilir.
-- Docker ile kurulum: Backend, PostgreSQL ve frontend Nginx container olarak çalışır.
-
-## 1. Lokal Kurulum
-
-Bu yöntemde backend NestJS ve frontend Vite lokal Node.js process'i olarak çalışır.
-
-### 1. Repository'yi hazırla
+### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Muhammed-Ozberk/incident-management.git
 cd incident-management
 ```
 
-### 2. PostgreSQL'i hazırla
+### 2. Start PostgreSQL
 
-Bu adım için iki seçenek vardır.
-
-Seçenek A: PostgreSQL'i Docker ile başlatmak:
+Either start the root Compose service:
 
 ```bash
 docker compose up -d
 ```
 
-Varsayılan PostgreSQL bilgileri:
+or provide your own PostgreSQL database. The default local connection is:
 
 ```text
 Host: localhost
@@ -99,26 +97,21 @@ User: postgres
 Password: postgres
 ```
 
-Seçenek B: Lokal PostgreSQL kullanmak:
-
-Bilgisayarınızda PostgreSQL kuruluysa `incidents` adında bir database oluşturun ve `backend/.env` içindeki `DATABASE_URL` değerini kendi lokal PostgreSQL bilgilerinize göre ayarlayın.
-
-Örnek:
-
-```text
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/incidents?schema=public"
-```
-
-### 3. Backend ortam değişkenlerini oluştur
+### 3. Configure and start the backend
 
 ```bash
 cd backend
 cp .env.example .env
+npm install
+npm run prisma:generate
+npm run prisma:deploy
+npm run seed
+npm run dev
 ```
 
-Örnek `.env`:
+The example backend environment is:
 
-```text
+```dotenv
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/incidents?schema=public"
 PORT=3001
 FRONTEND_ORIGIN="http://localhost:3000"
@@ -126,195 +119,98 @@ GEMINI_API_KEY=""
 GOOGLE_AI_MODEL="gemini-2.5-flash"
 ```
 
-AI özelliklerini gerçek Gemini API ile kullanmak için `GEMINI_API_KEY` verilmelidir. API key yoksa sistem deterministic fallback öneriler/özetler üretir; bu sayede temel akışlar çalışmaya devam eder.
+The API runs at `http://localhost:3001`; Swagger is available at `http://localhost:3001/api-docs`.
 
-### 4. Backend dependency, migration ve seed
+### 4. Configure and start the frontend
 
-```bash
-npm install
-npm run prisma:generate
-npm run prisma:deploy
-npm run seed
-```
-
-Gelişim sırasında yeni migration oluşturmak için:
-
-```bash
-npm run prisma:migrate -- --name migration_name
-```
-
-Mevcut migration'ları başka ortamda uygulamak için:
-
-```bash
-npm run prisma:deploy
-```
-
-### 5. Backend'i çalıştır
-
-```bash
-npm run dev
-```
-
-Backend varsayılan olarak `http://localhost:3001` üzerinde çalışır.
-
-Swagger dokümanı:
-
-```text
-http://localhost:3001/api-docs
-```
-
-### 6. Frontend ortam değişkenlerini oluştur
-
-Yeni terminalde:
+In a second terminal:
 
 ```bash
 cd frontend
 cp .env.example .env
-```
-
-Örnek `.env`:
-
-```text
-VITE_API_URL="http://localhost:3001"
-VITE_SOCKET_URL="http://localhost:3001"
-```
-
-### 7. Frontend'i çalıştır
-
-```bash
 npm install
 npm run dev
 ```
 
-Frontend `http://localhost:3000`, backend `http://localhost:3001` üzerinde çalışır.
+The example frontend environment is:
 
-## 2. Docker ile Kurulum ve Çalıştırma
+```dotenv
+VITE_API_URL="http://localhost:3001"
+VITE_SOCKET_URL="http://localhost:3001"
+```
 
-Bu yöntem tüm stack'i container olarak ayağa kaldırır. Frontend Nginx ile servis edilir; backend container başlarken migration ve seed işlemlerini otomatik uygular.
+Open `http://localhost:3000`.
 
-Root dizinde:
+## Run the complete stack with Docker
+
+Create `backend/.env` first, then run from the repository root:
 
 ```bash
 ./scripts/docker-stack.sh up
 ```
 
-Bu komut sırasıyla:
-- `backend/docker-compose.yml` ile PostgreSQL ve NestJS backend servislerini başlatır.
-- `frontend/docker-compose.yml` ile Vite build çıktısını Nginx üzerinden servis eder.
-
-Varsayılan adresler:
+Default Docker endpoints:
 
 ```text
-Frontend: http://localhost:3000
-Backend:  http://localhost:3001
-Swagger:  http://localhost:3001/api-docs
-Postgres host port: 5433
+Frontend:          http://localhost:3000
+Backend:           http://localhost:3001
+Swagger:           http://localhost:3001/api-docs
+PostgreSQL (host): localhost:5433
 ```
 
-PostgreSQL container içinde yine `5432` portunda çalışır; host tarafında varsayılan `5433` kullanılmasının sebebi lokal geliştirme için açılan PostgreSQL'in `5432` portuyla çakışmamaktır.
+Available stack commands are `up`, `down`, `restart`, `logs`, `ps`, and `build`.
 
-Script komutları:
+## Tests
 
-```bash
-./scripts/docker-stack.sh up
-./scripts/docker-stack.sh down
-./scripts/docker-stack.sh restart
-./scripts/docker-stack.sh logs
-./scripts/docker-stack.sh ps
-./scripts/docker-stack.sh build
-```
-
-Sadece backend ve veritabanı için:
+Backend unit tests:
 
 ```bash
 cd backend
-docker compose up -d --build
+npm test
 ```
 
-Sadece frontend Nginx container'ı için:
+PostgreSQL integration test with Testcontainers:
+
+```bash
+cd backend
+npm run test:integration
+```
+
+This test requires a running Docker daemon. It starts a disposable PostgreSQL 16 container, applies the real Prisma migrations, verifies incident persistence through the NestJS API, and removes the container afterward. No developer database or fixed host port is used.
+
+Existing backend E2E tests use the `DATABASE_URL` configured in `backend/.env`:
+
+```bash
+cd backend
+npm run test:e2e
+```
+
+Frontend tests:
 
 ```bash
 cd frontend
-docker compose up -d --build
+npm test
 ```
 
-Frontend Docker build arg'leri:
-
-```text
-VITE_API_URL=http://localhost:3001
-VITE_SOCKET_URL=http://localhost:3001
-FRONTEND_PORT=3000
-```
-
-Backend Docker environment değerleri:
-
-```text
-BACKEND_PORT=3001
-POSTGRES_PORT=5433
-GEMINI_API_KEY=
-GOOGLE_AI_MODEL=gemini-2.5-flash
-```
-
-Backend container başlarken `prisma migrate deploy` ve `prisma db seed` çalıştırır, ardından production NestJS uygulamasını başlatır.
-
-Docker stack'i kapatmak için:
+Build verification:
 
 ```bash
-./scripts/docker-stack.sh down
+cd backend && npm run build
+cd ../frontend && npm run build
 ```
 
-## 3. Simulator Çalıştırma
+## Incident simulator
 
-Simulator, backend API üzerinden belirli aralıklarla incident oluşturur. Gerçek zamanlı UI senkronizasyonunu test etmek için kullanılabilir.
-
-Ön koşullar:
-- Backend çalışıyor olmalı.
-- Database migration ve seed uygulanmış olmalı.
-
-Backend klasöründe:
+With the backend and database running:
 
 ```bash
 cd backend
 npm run simulate
 ```
 
-Simulator verileri:
+The simulator reads `backend/scripts/data/incident-simulator-data.json`, resolves registered services through the API, and creates incidents at intervals to demonstrate live UI synchronization.
 
-```text
-backend/scripts/data/incident-simulator-data.json
-```
-
-Simulator kayıtlı servis listesini API'den alır ve incident oluştururken `serviceId` kullanır.
-
-## 4. Scriptler ve Komutlar
-
-Backend:
-
-```bash
-npm run dev              # NestJS watch mode
-npm run build            # Backend build
-npm run start:prod       # dist/main.js çalıştırır
-npm run prisma:generate  # Prisma Client üretir
-npm run prisma:migrate   # Geliştirme migration'ı oluşturur ve uygular
-npm run prisma:deploy    # Var olan migration'ları uygular
-npm run seed             # Seed datayı uygular
-npm test                 # Backend unit testleri
-npm run test:e2e         # PostgreSQL kullanan backend e2e testleri
-npm run simulate         # Simulatoru başlatır
-```
-
-Frontend:
-
-```bash
-npm run dev      # Vite dev server
-npm run build    # Production build
-npm run preview  # Build preview
-npm test         # Frontend testleri
-```
-
-## API Özeti
-
-Incident endpointleri:
+## API overview
 
 ```text
 GET    /incidents/stats
@@ -325,11 +221,7 @@ PATCH  /incidents/:id
 DELETE /incidents/:id
 POST   /incidents/ai-suggest
 POST   /incidents/:id/ai-summary
-```
 
-Service endpointleri:
-
-```text
 GET    /services
 GET    /services/:id
 POST   /services
@@ -337,174 +229,14 @@ PATCH  /services/:id
 DELETE /services/:id
 ```
 
-Response formatı:
+Successful responses use `{ "status": true, "message": "...", "data": ... }`; errors use `{ "status": false, "message": "..." }`. Ready-to-run examples are in `postman/incident-management.postman_collection.json`.
 
-Başarılı response:
+## Architecture notes
 
-```json
-{
-  "status": true,
-  "message": "Incident created successfully",
-  "data": {}
-}
-```
+The backend is organized by feature and then by application, domain, infrastructure, and presentation layers. Controllers handle transport concerns, application services enforce workflow rules, repositories isolate Prisma access, and real-time events are emitted only after database operations succeed.
 
-Hata response:
+The frontend follows the same feature-oriented approach. Incident API calls, types, state hooks, Socket.IO event handling, and UI components live together under `frontend/src/features/incidents`.
 
-```json
-{
-  "status": false,
-  "message": "Validation failed"
-}
-```
+## License
 
-## Veri Modeli
-
-Incident:
-- `id`
-- `title`
-- `description`
-- `serviceId`
-- `service`
-- `severity`: `low`, `medium`, `high`, `critical`
-- `status`: `open`, `investigating`, `resolved`
-- `summary`: AI tarafından üretilen opsiyonel özet
-- `createdAt`
-- `updatedAt`
-- `deletedAt`
-
-Incident oluşturma API'si UI tarafında tercih edilen `serviceId` alanını kabul eder. Case dokümanındaki örnek request ile uyumlu kalmak için `service: "Payment API"` gibi kayıtlı servis adı gönderilmesi de desteklenir; backend bu servis adını ilgili `serviceId` değerine çözer.
-
-Service:
-- `id`
-- `name`
-- `description`
-- `isActive`
-- `createdAt`
-- `updatedAt`
-
-AuditLog:
-- Incident üzerindeki status, severity, description, service ve summary değişikliklerini tutar.
-
-## Mimari Yaklaşım
-
-Backend feature-based ve feature içinde katmanlı bir yapıyla organize edildi:
-
-```text
-modules/
-  incidents/
-    application/
-    domain/
-    infrastructure/
-    presentation/
-```
-
-Bu tercih, NestJS'in module yapısına uyumlu kalırken controller, service, repository, DTO ve domain sorumluluklarını ayırmak için yapıldı.
-
-Temel kararlar:
-- HTTP request önce validation pipe'tan geçer.
-- Controller yalnızca request/response sınırında kalır.
-- Application service iş kurallarını yönetir.
-- Repository Prisma erişimini soyutlar.
-- Realtime event sadece database işlemi başarılı olduktan sonra yayılır.
-- Socket.IO backend içinde ayrı bir realtime module olarak konumlandırıldı.
-- Incident oluştururken serbest service text yerine kayıtlı `Service` tablosundan `serviceId` seçilir.
-- Silme işlemi soft delete olarak uygulanır.
-- AI summary ilk oluşturulduğunda DB'ye kaydedilir; sonraki açılışta kayıtlı özet gösterilir, istenirse yeniden üretilebilir.
-
-## Frontend Yaklaşımı
-
-Frontend feature-based organize edildi. Incident ile ilgili API, type, hook, component ve realtime kodları `features/incidents` altında tutuldu.
-
-UI davranışları:
-- Dashboard metrik kartları
-- Service, status ve severity filtreleri
-- Pagination metadata ile sayfalama
-- Loading, error ve empty state
-- Realtime bağlantı durumu
-- Yeni incident ve güncellemeler için toast bildirimleri
-- Yeni gelen kayıtlarda animasyon
-- Status action butonları
-- Record action butonları
-- Incident detay popup'ı
-- Audit log popup'ı
-- AI summary popup'ı
-
-## Realtime Davranışı
-
-Socket.IO eventleri:
-
-```text
-incident.created
-incident.updated
-incident.deleted
-```
-
-Frontend reconnect mekanizması açıktır. Socket bağlantısı koptuğunda UI bağlantı durumunu gösterir; yeniden bağlanınca liste ve metrikler tekrar senkronize edilir.
-
-## AI Özellikleri
-
-AI entegrasyonu opsiyonel case maddesi için eklendi.
-
-Desteklenen özellikler:
-- Title ve description üzerinden severity önerisi
-- Kayıtlı servisler arasından service önerisi
-- Uzun description için AI summary üretimi
-- Summary'nin DB'ye kaydedilmesi
-- İstenirse summary'nin yeniden üretilmesi
-
-API key yoksa fallback algoritma çalışır. Bu, projeyi değerlendiren kişinin API key vermeden de akışları test edebilmesini sağlar.
-
-## Varsayımlar
-
-- Incident'lar sisteme HTTP API üzerinden gelir; realtime taraf UI senkronizasyonu içindir.
-- Service değeri serbest text yerine kayıtlı servis listesinden seçilir.
-- Service silme işlemi fiziksel silme değil deactivate olarak ele alınır.
-- Incident silme soft delete olarak uygulanır.
-- Seed script idempotent çalışır; aynı seed tekrar çalıştığında duplicate servis/incident oluşturmaz.
-- AI entegrasyonu opsiyoneldir; API key olmadığında uygulama tamamen durmaz.
-- Authentication/authorization case kapsamında belirtilmediği için eklenmedi.
-
-## Test
-
-Backend:
-
-```bash
-cd backend
-npm test
-```
-
-Frontend:
-
-```bash
-cd frontend
-npm test
-```
-
-Son kontrol durumunda:
-- Backend testleri: 7 passed
-- Backend e2e testleri: 5 passed
-- Frontend testleri: 2 passed
-- Backend build: başarılı
-- Frontend build: başarılı
-
-## Postman
-
-Postman collection:
-
-```text
-postman/incident-management.postman_collection.json
-```
-
-Collection içinde incident, service, AI ve stats endpointleri için örnek requestler bulunur.
-
-## Daha Fazla Zaman Olsaydı
-
-- Authentication ve role-based authorization eklenirdi.
-- Daha kapsamlı integration testleri yazılırdı.
-- Incident timeline UI'i daha gelişmiş hale getirilirdi.
-- Service management için ayrı bir frontend sayfası eklenirdi.
-- Production deployment için Dockerfile ve compose profilleri eklenirdi.
-- WebSocket eventleri için e2e testleri eklenirdi.
-- AI prompt ve model seçimi için config paneli eklenirdi.
-- Audit log için filtreleme ve export özelliği eklenirdi.
+This project is available under the [MIT License](LICENSE).
