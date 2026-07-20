@@ -1,5 +1,7 @@
 # Incident Management
 
+[![CI](https://github.com/Muhammed-Ozberk/incident-management/actions/workflows/ci.yml/badge.svg)](https://github.com/Muhammed-Ozberk/incident-management/actions/workflows/ci.yml)
+
 Real-time incident management dashboard with NestJS, PostgreSQL, Socket.IO and AI-assisted triage.
 
 ![Incident Management dashboard](docs/images/dashboard.png)
